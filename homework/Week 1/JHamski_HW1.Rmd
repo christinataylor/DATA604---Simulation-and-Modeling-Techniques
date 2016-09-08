@@ -1,0 +1,146 @@
+---
+title: 'IS 604 – Homework #1'
+author: "J. Hamski"
+date: "September 3, 2016"
+output: pdf_document
+---
+
+1.1) Name several entities, attributes, activities, events, and state variables for the following systems:
+
+a. Cafeteria
+
+*entities*: diners  
+*attributes*: tables vacancies  
+*activities*: sitting down, eating  
+*events*: arrive at seat, depart seat  
+*state variables*: number of diners  
+
+
+b. Grocery store  
+*entities*: shelves, items on shelves (UPC codes)     
+*attributes*:  
+*activities*:   
+*events*:   
+*state variables*:   
+
+c. laudromat
+*entities*:   
+*attributes*: 
+*activities*:   
+*events*:   
+*state variables*:
+
+d. Fast-food restaurant
+*entities*:   
+*attributes*: 
+*activities*:   
+*events*:   
+*state variables*:
+
+e. Hospital emergency room
+*entities*: patients   
+*attributes*: severity of ailment 
+*activities*: treatment   
+*events*:   
+*state variables*:
+
+f. Taxicab company with 10 taxis
+*entities*:   
+*attributes*: 
+*activities*:   
+*events*:   
+*state variables*:
+
+g. Automobile assembly line
+*entities*: cars     
+*attributes*: percent assembled
+*activities*: assembling a single car       
+*events*: assembly of a specific section of car, fixing a specific part     
+*state variables*: 
+
+2.1)
+
+```{r}
+# time unit is minutes
+
+between.arrivals <- c(0,60,120,180)
+between.arrivals.prob <- c(0.23,0.37,0.28,0.12)
+
+
+shop.model <- function(max.customers){
+  
+  customer <- 1
+  arrival.time <- 0
+  service.time <- 25
+  service.time.begins <- 
+  service.time.ends <- NULL
+  time.in.system <- 0
+  time.in.queue <- 0
+  int.arrival.time <- 0
+  
+  for (i in 1:(max.customers - 1)) {
+    customer <- c(customer, customer[i]+1)
+    print(customer)
+    
+    sim.service.time <- round(rnorm(n = 1, mean = (50), sd = (8)),0)
+    service.time <- c(service.time, sim.service.time)
+    
+    int.arrival.time <- c(int.arrival.time, sample(x = between.arrivals, size = 1, prob = between.arrivals.prob))
+    
+    arrival.time <- c(arrival.time, arrival.time[i] + int.arrival.time[i])
+    
+    service.time.begins <- c(service.time.begins, max(arrival.time[i], service.time.ends[i - 1]))
+    
+    service.time.ends <- c(service.time.ends, service.time.begins[i] + service.time[i])
+    
+    time.in.system <- c(time.in.system, arrival.time[i] - service.time.ends[i])
+
+    time.in.queue <- c(time.in.queue, service.time.begins[i] - arrival.time[i])
+    
+    print(time.in.queue)
+  }
+  
+}
+
+shop.model(5)
+
+
+
+```
+
+2.2)
+
+```{r}
+customers.day <- c(8,10,12,14)
+customer.prob <- c(0.35,0.30,0.25,0.10)
+
+dozens.ordered <- c(1,2,3,4)
+ordered.prob <- c(0.4,0.3,0.2,0.1)
+
+bagel.sim <- function(){
+  day = 1
+  
+  while(day <=5){
+    customers <- sample(x = customers.day, size = 1, prob = customer.prob)
+    
+    bagels.ordered = NULL
+    
+    bagels.ordered = for(i in 1:customers){i * sample(x = dozens.ordered, size = 1, prob = ordered.prob)}
+    
+    day = day + 1
+    
+  }
+}
+
+bagel.sim()
+```
+
+
+2.4)
+
+2.5) 
+
+2.7)
+
+2.8)
+
