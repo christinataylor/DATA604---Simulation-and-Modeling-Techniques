@@ -72,8 +72,8 @@ shop.model <- function(max.customers){
   customer <- 1
   arrival.time <- 0
   service.time <- 25
-  service.time.begins <- 
-  service.time.ends <- NULL
+  service.time.begins <- 0
+  service.time.ends <- 50
   time.in.system <- 0
   time.in.queue <- 0
   int.arrival.time <- 0
@@ -104,34 +104,80 @@ shop.model <- function(max.customers){
 }
 
 a <- shop.model(10)
-
 ```
 
 2.2)
 
 ```{r}
+#bagel units are dozens
+
 customers.day <- c(8,10,12,14)
 customer.prob <- c(0.35,0.30,0.25,0.10)
 
 dozens.ordered <- c(1,2,3,4)
 ordered.prob <- c(0.4,0.3,0.2,0.1)
 
-bagel.sim <- function(){
-  day = 1
+bagel.demand.sim <- function(quantity, sim.days){
   
-  while(day <=5){
-    customers <- sample(x = customers.day, size = 1, prob = customer.prob)
+  day <- 1
+  demand <- NULL
+  revenue <- NULL
+  lost.profit <- NULL
+  salvage <- NULL
+  daily.cost <- quantity * 5.8
+  daily.profit <- NULL
+
+  
+  for (i in 1:(sim.days)) {
+    day <- c(day, day[i] + 1)
+    #print(day)
+    #print(i)
     
-    bagels.ordered = NULL
+    #start demand subroutine 
+    customers <- sample(x = customers.day, prob = customer.prob, size = 1)
+    bagels.sold <- 0
+    for (j in 1:(customers)) {
+      bagels.sold <- bagels.sold + sample(x = dozens.ordered, prob = ordered.prob, size = 1)
+    }
+    #end demand subroutine
     
-    bagels.ordered = for(i in 1:customers){i * sample(x = dozens.ordered, size = 1, prob = ordered.prob)}
+    #print(bagels.sold)
     
-    day = day + 1
+    demand <- c(demand, bagels.sold)
+    
+    revenue <- c(revenue, bagels.sold * 8.4)
+
+    lost.profit.day <- ifelse(quantity < bagels.sold, (bagels.sold - quantity) * 2.6, 0)
+    lost.profit <- c(lost.profit, lost.profit.day)
+    
+    salvage.day <- ifelse(quantity > bagels.sold, (quantity - bagels.sold)*4.2, 0)
+    salvage <- c(salvage, salvage.day)
+    
+    daily.profit <- c(daily.profit, bagels.sold * 8.4 - lost.profit.day + salvage.day - daily.cost)
     
   }
+  
+  return(mean(daily.profit))
 }
+```
 
-bagel.sim()
+```{r}
+max <- 5
+min <- 60
+
+quantities <- seq(max, min, 5)
+```
+
+```{r}
+five.day.sim.results <- sapply(quantities, FUN=bagel.demand.sim, sim.days = 5)
+plot(five.day.sim.results)
+```
+
+
+Limiting to five days simulation only makes sense with Excel. Here, 1,000 days are simulated for each 5 dozen bin. 
+```{r}
+onethousand.day.sim.results <- sapply(quantities, FUN=bagel.demand.sim, sim.days = 1000)
+plot(onethousand.day.sim.results)
 ```
 
 
