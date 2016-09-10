@@ -80,7 +80,7 @@ shop.model <- function(max.customers){
   
   for (i in 1:(max.customers - 1)) {
     customer <- c(customer, customer[i]+1)
-    print(customer)
+    #print(customer)
     
     sim.service.time <- round(rnorm(n = 1, mean = (50), sd = (8)),0)
     service.time <- c(service.time, sim.service.time)
@@ -97,14 +97,13 @@ shop.model <- function(max.customers){
 
     time.in.queue <- c(time.in.queue, service.time.begins[i] - arrival.time[i])
     
-    print(time.in.queue)
+    #print(service.time)
   }
-  
+  output <- list(time.in.queue, service.time, time.in.system)
+  return(output)
 }
 
-shop.model(5)
-
-
+a <- shop.model(10)
 
 ```
 
@@ -137,6 +136,22 @@ bagel.sim()
 
 
 2.4)
+
+```{r}
+interarrival <- c(15,20,25,30,35)
+inter.prob <- c(0.14,0.22,0.43,0.17,0.04)
+
+service.time <- c(5,15,25,35,45)
+service.prob <- c(0.12,0.35,0.43,0.06,0.04)
+
+one.taxi <- function(){
+  
+  
+}
+
+```
+
+
 
 2.5) 
 
