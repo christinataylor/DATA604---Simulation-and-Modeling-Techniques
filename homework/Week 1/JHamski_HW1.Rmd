@@ -73,8 +73,8 @@ shop.model <- function(max.customers){
   arrival.time <- 0
   service.time <- 25
   service.time.begins <- 0
-  service.time.ends <- 50
-  time.in.system <- 0
+  service.time.ends <- 0
+  time.in.system <- 50
   time.in.queue <- 0
   int.arrival.time <- 0
   
@@ -109,6 +109,25 @@ a <- shop.model(10)
 2.2)
 
 ```{r}
+customers.day <- c(8,10,12,14)
+customer.prob <- c(0.35,0.30,0.25,0.10)
+
+dozens.ordered <- c(1,2,3,4)
+ordered.prob <- c(0.4,0.3,0.2,0.1)
+
+customers <- sample(x = customers.day, prob = customer.prob, size = 1)
+
+bagels.sold.day <- NULL
+for (j in 1:(customers)) {
+  
+  bagels.sold.day <- c(bagels.sold.day, sample(x = dozens.ordered, prob = ordered.prob, size = 1))
+}
+
+sum(bagels.sold.day)
+```
+
+
+```{r}
 #bagel units are dozens
 
 customers.day <- c(8,10,12,14)
@@ -134,11 +153,11 @@ bagel.demand.sim <- function(quantity, sim.days){
     #print(i)
     
     #start demand subroutine 
-    customers <- sample(x = customers.day, prob = customer.prob, size = 1)
-    bagels.sold <- 0
+    bagels.sold.day <- NULL
     for (j in 1:(customers)) {
-      bagels.sold <- bagels.sold + sample(x = dozens.ordered, prob = ordered.prob, size = 1)
+      bagels.sold.day <- c(bagels.sold.day, sample(x = dozens.ordered, prob = ordered.prob, size = 1))
     }
+    bagels.sold <- sum(bagels.sold.day)
     #end demand subroutine
     
     #print(bagels.sold)
@@ -156,7 +175,6 @@ bagel.demand.sim <- function(quantity, sim.days){
     daily.profit <- c(daily.profit, bagels.sold * 8.4 - lost.profit.day + salvage.day - daily.cost)
     
   }
-  
   return(mean(daily.profit))
 }
 ```
