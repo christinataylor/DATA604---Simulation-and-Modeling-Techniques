@@ -5,62 +5,67 @@ date: "September 3, 2016"
 output: pdf_document
 ---
 
+```{r}
+library(ggplot2)
+```
+
 1.1) Name several entities, attributes, activities, events, and state variables for the following systems:
 
 a. Cafeteria
 
-*entities*: diners  
-*attributes*: tables vacancies  
-*activities*: sitting down, eating  
-*events*: arrive at seat, depart seat  
-*state variables*: number of diners  
+*entities*: diners, cash register attendants, cooks  
+*attributes*: tables vacancies, line wait time  
+*activities*: sitting down, eating, waiting to check out  
+*events*: arrive at seat, depart seat, checking out     
+*state variables*: time, diner number    
 
 
 b. Grocery store  
-*entities*: shelves, items on shelves (UPC codes)     
-*attributes*:  
-*activities*:   
-*events*:   
-*state variables*:   
+*entities*: shelves, items on shelves (UPC codes)       
+*attributes*: quantity of product available    
+*activities*: restocking, picking out items     
+*events*: taking an item off a shelf    
+*state variables*: time, shift     
 
-c. laudromat
-*entities*:   
-*attributes*: 
-*activities*:   
-*events*:   
-*state variables*:
+c. laudromat  
+*entities*: customers, washers, dryers     
+*attributes*: wash/dry time   
+*activities*: washing, drying   
+*events*: wash/dry started, wash/dry ended   
+*state variables*: time, wash/dry cycles  
 
 d. Fast-food restaurant
-*entities*:   
-*attributes*: 
-*activities*:   
-*events*:   
-*state variables*:
+*entities*: cars in a drive through window       
+*attributes*: order preparation time   
+*activities*: ordering, preparing order     
+*events*: order entered, order prepared     
+*state variables*: car number, time   
 
 e. Hospital emergency room
 *entities*: patients   
-*attributes*: severity of ailment 
-*activities*: treatment   
-*events*:   
-*state variables*:
+*attributes*: time of treatment, severity (priority for treatment)   
+*activities*: treatment, waiting      
+*events*: entering into queue,  triage, wait time, treatment start, treatment end     
+*state variables*: time, waiting order, priority  
 
 f. Taxicab company with 10 taxis
-*entities*:   
-*attributes*: 
-*activities*:   
-*events*:   
-*state variables*:
+*entities*: cars, riders, drivers     
+*attributes*: hours of operation, breaks     
+*activities*: picking up fares, driving them to destination     
+*events*: pickup, drop-off     
+*state variables*: taxi occupancy, time, trip length  
 
 g. Automobile assembly line
-*entities*: cars     
-*attributes*: percent assembled
+*entities*: cars, workers, robots       
+*attributes*: percent assembled, maintenance requirements, shift changes  
 *activities*: assembling a single car       
 *events*: assembly of a specific section of car, fixing a specific part     
-*state variables*: 
+*state variables*: time, begin assebly, end essembly, ready for assembly action   
 
 2.1)
 
 ```{r}
+set.seed(243)
 # time unit is minutes
 
 between.arrivals <- c(0,60,120,180)
@@ -71,61 +76,62 @@ shop.model <- function(max.customers){
   
   customer <- 1
   arrival.time <- 0
-  service.time <- 25
-  service.time.begins <- 0
-  service.time.ends <- 0
-  time.in.system <- 50
-  time.in.queue <- 0
-  int.arrival.time <- 0
+  service.time <- 50
+  service.time.begins <- 25
+  service.time.ends <- NULL
+  time.in.system <- 25
+  time.in.queue <- NULL
+  int.arrival.time <- NULL
   
-  for (i in 1:(max.customers - 1)) {
-    customer <- c(customer, customer[i]+1)
+  for (i in 1:(max.customers-1)) {
+    
+    
+    customer <- c(customer, customer[i] + 1)
     #print(customer)
     
     sim.service.time <- round(rnorm(n = 1, mean = (50), sd = (8)),0)
     service.time <- c(service.time, sim.service.time)
     
-    int.arrival.time <- c(int.arrival.time, sample(x = between.arrivals, size = 1, prob = between.arrivals.prob))
+    int.arrival.time.customer <- sample(x = between.arrivals, size = 1, prob = between.arrivals.prob)
+    int.arrival.time <- c(int.arrival.time, int.arrival.time.customer)
     
-    arrival.time <- c(arrival.time, arrival.time[i] + int.arrival.time[i])
+    arrival.time <- c(arrival.time, arrival.time[i-1] + int.arrival.time.customer)
     
     service.time.begins <- c(service.time.begins, max(arrival.time[i], service.time.ends[i - 1]))
     
     service.time.ends <- c(service.time.ends, service.time.begins[i] + service.time[i])
     
-    time.in.system <- c(time.in.system, arrival.time[i] - service.time.ends[i])
+    time.in.system <- c(time.in.system, service.time.ends[i] - arrival.time[i])
 
-    time.in.queue <- c(time.in.queue, service.time.begins[i] - arrival.time[i])
+    time.in.queue <- c(time.in.queue, arrival.time[i] - service.time.begins[i])
     
-    #print(service.time)
+    #print(service.time[i])
   }
-  output <- list(time.in.queue, service.time, time.in.system)
+  output <- list(customer, time.in.queue, service.time, time.in.system)
   return(output)
 }
 
 a <- shop.model(10)
 ```
 
-2.2)
-
+Average time in queue:
 ```{r}
-customers.day <- c(8,10,12,14)
-customer.prob <- c(0.35,0.30,0.25,0.10)
-
-dozens.ordered <- c(1,2,3,4)
-ordered.prob <- c(0.4,0.3,0.2,0.1)
-
-customers <- sample(x = customers.day, prob = customer.prob, size = 1)
-
-bagels.sold.day <- NULL
-for (j in 1:(customers)) {
-  
-  bagels.sold.day <- c(bagels.sold.day, sample(x = dozens.ordered, prob = ordered.prob, size = 1))
-}
-
-sum(bagels.sold.day)
+mean(a[[1]])
 ```
 
+Average processing time:
+```{r}
+mean(a[[2]])
+```
+
+Maximum time in system:
+```{r}
+max(a[[3]])
+```
+
+This model shows reasonable results for the average and max processing times, but certainly has an error (that I failed to debug) since time in system shows occasonal negative numbers. 
+
+2.2)
 
 ```{r}
 #bagel units are dozens
@@ -152,7 +158,8 @@ bagel.demand.sim <- function(quantity, sim.days){
     #print(day)
     #print(i)
     
-    #start demand subroutine 
+    #start demand subroutine
+    customers <- sample(x = customers.day, prob = customer.prob, size = 1)
     bagels.sold.day <- NULL
     for (j in 1:(customers)) {
       bagels.sold.day <- c(bagels.sold.day, sample(x = dozens.ordered, prob = ordered.prob, size = 1))
@@ -219,7 +226,111 @@ one.taxi <- function(){
 
 2.5) 
 
-2.7)
+```{r}
+rand.var.sim <- function(){
+  X <- rnorm(1, mean = 100, sd = 100)
+  Y <- rnorm(1, mean = 300, sd = 225)
+  Z <- rnorm(1, mean = 40, sd = 64)
+  
+  W <- (X + Y)/Z
+  return(W)  
+}
+```
+
+```{r}
+rand.var.results <- replicate(50, rand.var.sim())
+qplot(rand.var.results, geom = "histogram", binwidth = 3) 
+```
+
+Note that 50 is not really enough replications to show the full variance of this distribution. Simulating the random variable 1000 times shows this random variable has a tendency to produce some extreme values.   
+
+```{r}
+rand.var.results <- replicate(1000, rand.var.sim())
+qplot(rand.var.results, geom = "histogram", binwidth = 3) 
+var(rand.var.results)
+```
+
+
+2.6)
+
+```{r}
+B.values <- c(0,1,2,3,4)
+B.probs <- rep(1/5, length(B.values))
+
+C.values <- c(10,20,30,40)
+C.probs <- c(0.1,0.25,0.5,0.15)
+
+D.sim <- function() {
+  A <- rnorm(1, mean = 100, sd = 400)
+  B <- sample(x = B.values, prob = B.probs, size = 1)
+  C <- sample(x = C.values, prob = C.probs, size = 1)
+  
+  D <- (A - 25*B) / (2*C)
+  return(D)
+}
+```
+
+```{r}
+D.sim.results <- replicate(100, D.sim())
+
+mean(D.sim.results)
+```
+
+2.7
+
+```{r}
+# output goal: average number of lost sales per week
+
+inventory.sim <- function(sim.weeks){
+  day <- 1
+  inventory <- 18
+  
+  first.day.demand <- rnorm(1, mean = 5, sd = 1.5)
+  lost.sales <- ifelse(first.day.demand > inventory, first.day.demand - inventory, 0)
+  
+  
+  
+  #simulation time unit is 1 day. Loop starts on day 2
+  for (i in 1:(sim.weeks*7)) {
+    
+  }
+
+}
+
+a <- inventory.sim(5)
+a
+```
 
 2.8)
+
+Here I try a different approach than previous problems. I first generate the required set of probability distribution defined random variables, then loop through to perform the loading calculations. 
+```{r}
+#time unit is minutes
+
+
+elevator.sim <- function(sim.min) {
+  A <- runif(sim.min, min = 3, max = 7)
+  B <- rep(6, sim.min)
+  C <- sample(x = c(2, 3), prob = c(0.33, 0.67), replace = TRUE, size = sim.min)
+  
+  time <- 0
+  
+  
+  #calculate loading
+  while (time < 60) {
+    time <- time + 1
+    print(time)
+    
+    
+    
+  }
+  
+  
+}
+
+elevator.sim(60)
+
+
+```
+
 
