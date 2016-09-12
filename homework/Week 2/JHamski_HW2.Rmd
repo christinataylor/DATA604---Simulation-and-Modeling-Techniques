@@ -1,0 +1,11 @@
+---
+title: 'IS 604 – Homework #2'
+author: "J. Hamski"
+date: "September 11, 2016"
+output: pdf_document
+---
+
+```{r}
+library(ggplot2)
+```
+

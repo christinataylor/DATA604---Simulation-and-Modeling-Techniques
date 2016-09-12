@@ -11,8 +11,7 @@ library(ggplot2)
 
 1.1) Name several entities, attributes, activities, events, and state variables for the following systems:
 
-a. Cafeteria
-
+a. Cafeteria  
 *entities*: diners, cash register attendants, cooks  
 *attributes*: tables vacancies, line wait time  
 *activities*: sitting down, eating, waiting to check out  
@@ -63,6 +62,8 @@ g. Automobile assembly line
 *state variables*: time, begin assebly, end essembly, ready for assembly action   
 
 2.1)
+
+The Excel examples would not allow me to do any editing on MacOS, so the remaining problems were attempted in R. 
 
 ```{r}
 set.seed(243)
@@ -149,7 +150,7 @@ bagel.demand.sim <- function(quantity, sim.days){
   revenue <- NULL
   lost.profit <- NULL
   salvage <- NULL
-  daily.cost <- quantity * 5.8
+  daily.cost <- NULL
   daily.profit <- NULL
 
   
@@ -164,7 +165,8 @@ bagel.demand.sim <- function(quantity, sim.days){
     for (j in 1:(customers)) {
       bagels.sold.day <- c(bagels.sold.day, sample(x = dozens.ordered, prob = ordered.prob, size = 1))
     }
-    bagels.sold <- sum(bagels.sold.day)
+    #print(bagels.sold.day)
+    bagels.sold <- sum(bagels.sold.day) 
     #end demand subroutine
     
     #print(bagels.sold)
@@ -172,14 +174,19 @@ bagel.demand.sim <- function(quantity, sim.days){
     demand <- c(demand, bagels.sold)
     
     revenue <- c(revenue, bagels.sold * 8.4)
+    
+    daily.cost.day <- quantity * 5.8
+    daily.cost <- c(daily.cost, daily.cost.day)
 
     lost.profit.day <- ifelse(quantity < bagels.sold, (bagels.sold - quantity) * 2.6, 0)
     lost.profit <- c(lost.profit, lost.profit.day)
+    #print(lost.profit.day)
     
     salvage.day <- ifelse(quantity > bagels.sold, (quantity - bagels.sold)*4.2, 0)
     salvage <- c(salvage, salvage.day)
+    #print(salvage.day)
     
-    daily.profit <- c(daily.profit, bagels.sold * 8.4 - lost.profit.day + salvage.day - daily.cost)
+    daily.profit <- c(daily.profit, bagels.sold * 8.4 - lost.profit.day + salvage.day - daily.cost.day)
     
   }
   return(mean(daily.profit))
@@ -204,6 +211,33 @@ Limiting to five days simulation only makes sense with Excel. Here, 1,000 days a
 onethousand.day.sim.results <- sapply(quantities, FUN=bagel.demand.sim, sim.days = 1000)
 plot(onethousand.day.sim.results)
 ```
+
+It looks like only 5 dozen is the right quantity to bake each day. This didn't sound right so I took a look at the demand generation subroutine.
+
+```{r}
+
+demand.sim <- function() {
+  #start demand subroutine
+    customers <- sample(x = customers.day, prob = customer.prob, size = 1)
+    bagels.sold.day <- NULL
+    for (j in 1:(customers)) {
+      bagels.sold.day <- c(bagels.sold.day, sample(x = dozens.ordered, prob = ordered.prob, size = 1))
+    }
+    #print(bagels.sold.day)
+    bagels.sold <- sum(bagels.sold.day) 
+    #end demand subroutine
+    return(bagels.sold)
+}
+
+demand.distribution <- replicate(1000, demand.sim())
+```
+
+
+```{r}
+summary(demand.distribution)
+```
+
+This suggests the actual best quantity is 20 dozen per day. I cannot figure out which part of my simulation is wrong, but this means more work is needed. 
 
 
 2.4)
@@ -284,53 +318,94 @@ mean(D.sim.results)
 inventory.sim <- function(sim.weeks){
   day <- 1
   inventory <- 18
-  
-  first.day.demand <- rnorm(1, mean = 5, sd = 1.5)
-  lost.sales <- ifelse(first.day.demand > inventory, first.day.demand - inventory, 0)
-  
-  
+  demand <- NULL
+  lost.sales <- NULL
+  order.days <- NULL
+  delivery.day <- NULL
+  inventory.record <- NULL
   
   #simulation time unit is 1 day. Loop starts on day 2
   for (i in 1:(sim.weeks*7)) {
     
+    demand.day <- round(rnorm(1, mean = 5, sd = 1.5), digits = 0)
+    demand <- c(demand, demand.day)
+    
+    lost.sales.day <- ifelse(demand.day > inventory, demand.day - inventory, 0)
+    lost.sales <- c(lost.sales, lost.sales.day)
+    
+    #recalculate inventory
+    inventory <- ifelse(demand.day < inventory, inventory - demand.day, 0)
+    inventory.record <- c(inventory.record, inventory)
+    
+   
+    #begin ordering subroutine
+    if (inventory < 10 && is.null(delivery.day) == TRUE) {
+      delivery.time.period <- round(runif(1, min = 0, max = 5), digits = 0)
+      delivery.day <- day + delivery.time.period
+      order.size <- 20 - inventory
+    }
+    
+    if (is.null(delivery.day) == FALSE && delivery.day == day) {
+      inventory <- inventory + order.size
+      delivery.day <- NULL
+    }
+    #end ordering subroutine
+    day <- day + 1
   }
-
+  return(list(lost.sales, demand, inventory.record))
 }
 
-a <- inventory.sim(5)
-a
+lost.sales.model <- inventory.sim(5)
+round(mean(lost.sales.model[[1]]), 0)
 ```
+This is giving the average as per-day, the time unit used in the simulation. Multiplying by 7 give the per-week value.
+```{r}
+round(mean(lost.sales.model[[1]]), 0) * 7
+```
+
+
+```{r}
+summary(lost.sales.model[[1]]) * 7
+```
+
+
+Because we're using R, we can run the simulation for more iterations. Here we find the mean for 1000 weeks. 
+```{r}
+lost.sales.model.1K.weeks <- inventory.sim(1000)
+summary(lost.sales.model.1K.weeks[[1]]) * 7
+```
+
 
 2.8)
 
-Here I try a different approach than previous problems. I first generate the required set of probability distribution defined random variables, then loop through to perform the loading calculations. 
+
 ```{r}
 #time unit is minutes
 
-
 elevator.sim <- function(sim.min) {
-  A <- runif(sim.min, min = 3, max = 7)
-  B <- rep(6, sim.min)
-  C <- sample(x = c(2, 3), prob = c(0.33, 0.67), replace = TRUE, size = sim.min)
+  
+  simulated.arrivals.total <- 1000
+  A <- runif(simulated.arrivals.total, min = 3, max = 7)
+  B <- rep(6, simulated.arrivals.total)
+  C <- sample(x = c(2, 3), prob = c(0.33, 0.67), replace = TRUE, size = simulated.arrivals.total)
   
   time <- 0
   
   
   #calculate loading
   while (time < 60) {
+    
+    #A.ready <- ifelse(A[time])
+    
+    
+    
     time <- time + 1
-    print(time)
-    
-    
-    
   }
   
   
 }
 
-elevator.sim(60)
-
-
+elevator <- elevator.sim(60)
 ```
 
 
