@@ -1,0 +1,99 @@
+---
+title: 'DATA 604 - Homework #3'
+author: "J. Hamski"
+date: "September 26, 2016"
+output: pdf_document
+---
+```{r}
+library(magrittr)
+```
+
+
+1.   
+
+```{r}
+
+LCG.1 <- function(seed, a, m){
+  X.i <- (seed * a) %% m  
+  return(X.i)
+}
+
+rand.list.1 = 1
+a = 11
+m = 16
+
+cnt = 0
+while (cnt < 3) {
+  rand.list.1 <- c(rand.list.1, LCG.1(rand.list.1[cnt], a, m))
+  cnt <- cnt + 1
+}
+
+ifelse(rand.list.1[1:2] == rand.list.1[(cnt - 1):cnt], break, rand.list.1 <- c(rand.list.1, LCG.1(rand.list.1[cnt], a, m)))
+
+rand.list.1
+```
+
+2.   
+```{r}
+mod.function <- function(X.i1, a, c, m){return((a*X.i1 + c) %% m)}
+
+a = 1
+c = 12
+m = 13
+X.0 = 1
+gen.size = 50
+rand.list.2 = X.0
+
+for (i in 1:gen.size){
+  rand.list.2[i+1] <- mod.function(rand.list.2[i], a, c, m)
+}
+
+rand.list.2
+```
+
+```{r}
+x <- rand.list.2[1:gen.size-1]
+y <- rand.list.2[2:gen.size]
+plot(x, y)
+```
+
+3.  
+
+```{r}
+a = 16807
+c = 0
+m = (2 ** 31) - 1
+X.0 = 1234567
+obs = 100000
+rand.list.3 = X.0
+
+for (i in 1:(obs-1)){
+  rand.list.3[i+1] <- mod.function(rand.list.3[i], a, c, m)
+}
+
+rand.list.3 <- rand.list.3 / m
+mean(rand.list.3)
+var(rand.list.3)
+```
+
+```{r}
+hist(rand.list.3)
+```
+
+
+```{r}
+num.bins = 20 
+bins <- seq(from = 0, to = 100, by = num.bins)
+
+chi.sq.list = NULL
+
+for (i in bins) {
+  obs.in.bins <- (obs/num.bins)
+  iter.value <- ((1 / obs.in.bins) - rand.list.3[i:(i+obs.in.bins)]) ** 2 / rand.list.3[i:(i+obs.in.bins)]
+  
+  chi.sq.list <- c(chi.sq.list, iter.value)
+}
+
+sum(chi.sq.list)
+```
+

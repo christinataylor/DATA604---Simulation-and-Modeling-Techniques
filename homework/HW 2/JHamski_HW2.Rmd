@@ -23,16 +23,37 @@ The variance calculation is completed here.
 
 3.  
 ```{r}
-x.y <- seq(from = 0, to = 1, by = 0.01)
-y.x <- seq(from = 1, to = 2, by = 0.01)
+x <- seq(from = 0, to = 1, by = 0.01)
+f.x <- (3/2) - x
+y <- seq(from = 1, to = 2, by = 0.01)
+f.y <- y - (1/2)
 
-y <- (3/2) - x.y 
-x <- y.x - (1/2)
+joint.rv <- cbind(x, f.x, y, f.y) %>% as.data.frame()
 
-joint.rv <- cbind(x.y, x, y.x, y) %>% as.data.frame()
-
-ggplot(joint.rv) + geom_line(aes(x=x, y=x.y)) + geom_line(aes(x=y.x, y=y))
+ggplot(joint.rv) + geom_line(aes(x=x, y=f.x)) + geom_line(aes(x=y, y=f.y))
 ```
+
+```{r}
+mean(f.x * x)
+```
+
+```{r}
+mean(f.y * y)
+```
+
+```{r}
+var(f.x)
+```
+
+```{r}
+var(f.y)
+```
+
+```{r}
+cov(f.x, f.y)
+```
+
+
 
 4.   
 ```{r}
