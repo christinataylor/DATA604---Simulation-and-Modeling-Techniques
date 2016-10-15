@@ -79,7 +79,7 @@ x.list <- lapply(n.increments, FUN = generate.x.list, D=D)
 ```
 
 ```{r}
-crude.cost.sim.1 <- replicate(100, sapply(x.list, FUN = cost.function.crude.apply, D=D))
+crude.cost.sim.1 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list, D=D), FUN = cost.function.crude.apply, D=D))
 ```
 
 ```{r}
@@ -88,7 +88,6 @@ crude.cost.sim.1.sd <- apply(crude.cost.sim.1, 1, FUN = sd)
 n <- 1:10
 crude.cost.sim.1.results <- cbind(n, crude.cost.sim.1.means, crude.cost.sim.1.sd) %>% as.data.frame()
 colnames(crude.cost.sim.1.results) <- c("n", "Cost.Means", "Cost.Standard.Deviation")
-
 ```
 
 ```{r}
@@ -99,9 +98,21 @@ ggplot(crude.cost.sim.1.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_er
 Now for D = 2 
 
 ```{r}
-D.2=2
-crude.cost.sim.2 <- replicate(100, sapply(x.list, FUN = cost.function.crude.apply, D=D.2))
+D.2 = 2
+crude.cost.sim.2 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list, D = D.2), FUN = cost.function.crude.apply, D = D.2))
 
 (target.D.2 <- (1/10)^D.2)
 ```
 
+```{r}
+crude.cost.sim.2.means <- apply(crude.cost.sim.2, 1, FUN = mean)
+crude.cost.sim.2.sd <- apply(crude.cost.sim.2, 1, FUN = sd)
+n <- 1:10
+crude.cost.sim.2.results <- cbind(n, crude.cost.sim.2.means, crude.cost.sim.2.sd) %>% as.data.frame()
+colnames(crude.cost.sim.2.results) <- c("n", "Cost.Means", "Cost.Standard.Deviation")
+```
+
+```{r}
+limits.2 <- aes(ymax = Cost.Means + Cost.Standard.Deviation, ymin = Cost.Means - Cost.Standard.Deviation)
+ggplot(crude.cost.sim.2.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits.2)
+```
