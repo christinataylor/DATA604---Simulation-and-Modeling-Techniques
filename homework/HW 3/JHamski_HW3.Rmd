@@ -6,6 +6,7 @@ output: pdf_document
 ---
 ```{r}
 library(magrittr)
+library(knitr)
 ```
 
 
@@ -58,7 +59,7 @@ plot(x, y)
 ```
 
 3.  
-
+Referenced used: http://www1.maths.leeds.ac.uk/~voss/projects/2012-RNG/Burgoine.pdf however my code was developed independently. 
 ```{r}
 a = 16807
 c = 0
@@ -80,20 +81,101 @@ var(rand.list.3)
 hist(rand.list.3)
 ```
 
-
 ```{r}
-num.bins = 20 
-bins <- seq(from = 0, to = 100, by = num.bins)
-
-chi.sq.list = NULL
-
-for (i in bins) {
-  obs.in.bins <- (obs/num.bins)
-  iter.value <- ((1 / obs.in.bins) - rand.list.3[i:(i+obs.in.bins)]) ** 2 / rand.list.3[i:(i+obs.in.bins)]
-  
-  chi.sq.list <- c(chi.sq.list, iter.value)
-}
-
-sum(chi.sq.list)
+binned.random.numbers <- by(rand.list.3, cut(rand.list.3,20),FUN=sum)
 ```
 
+4. 
+Inverse transform
+```{r}
+normrandit <- function(){
+  R <- runif(1)
+  normrand <- ((R ** 0.135) - (1 - R ** 0.135)) / 0.1975
+  return(normrand)
+}
+
+itstats <- function(N){
+  normrandit.samples <- replicate(N, normrandit())
+  return(c(mean(normrandit.samples), sd(normrandit.samples)))
+}
+```
+
+Box-Muller algorithm
+```{r}
+
+```
+
+
+6.
+```{r}
+inside.circle <- function(x){
+  ifelse(x[1]^2 + x[2]^2 < 1, return(1), return(0))}
+```
+
+```{r}
+estimate.pi <- function(N){
+ 
+  x <- runif(N)
+  y <- runif(N)
+  rand.samples <- matrix(x, y, ncol = 2, nrow = N)
+  
+  results.list <- apply(rand.samples, 1, function(x) inside.circle(x))
+
+  pi.estimate <- sum(results.list)/length(results.list) * 4
+  
+  se <- sd(results.list) / sqrt(length(results.list)) * 4
+  conf.int.up <- pi.estimate + 1.96 * se
+  conf.int.low <- pi.estimate - 1.96 * se
+  
+  output <- c(N, pi.estimate, se, conf.int.up, conf.int.low)
+  return(output)
+}
+```
+
+```{r}
+test.sample.sizes <- seq(from = 1000, to = 10000, by = 500)
+
+#this would be better with an apply function, but using a loop for now. 
+Ncnt <- NULL
+estimate <- NULL
+st.error <- NULL
+upper.conf <- NULL
+lower.conf <- NULL
+
+for(i in 1:length(test.sample.sizes)){
+
+  size.results <- estimate.pi(test.sample.sizes[i])
+  
+  Ncnt[i] <- size.results[1]
+  estimate[i] <- size.results[2]
+  st.error[i] <- size.results[3]
+  upper.conf[i] <- size.results[4]
+  lower.conf[i] <- size.results[5]
+}
+sample.size.results <- cbind(Ncnt, estimate, st.error, upper.conf, lower.conf)
+```
+
+```{r}
+colnames(sample.size.results) <- c("N", "estimate", "st.error", "upper.conf", "lower.conf")
+kable(sample.size.results)
+```
+It takes 7500 samples before we can be confident we're within 0.01 of the actual value of pi.
+
+```{r}
+results <- replicate(500, estimate.pi(7500))
+```
+
+```{r}
+hist(results[2,])
+```
+This resembles the normal distribution because of the central limit theorem. 
+
+```{r}
+(se <- sd(results[2,]) / sqrt(500))
+```
+
+```{r}
+length(which(results[2,] < 3.168006 & results[2,] > 3.093327)) / 500 * 100
+```
+
+Approximately 81% of my results are within the 95% confidence interval. 
