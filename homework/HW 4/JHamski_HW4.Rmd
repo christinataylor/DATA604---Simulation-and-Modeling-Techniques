@@ -4,21 +4,27 @@ author: "J. Hamski"
 date: "10/13/2016"
 output: pdf_document
 ---
-```{r}
+```{r, cache=FALSE, warning=FALSE, message=FALSE}
 library(ggplot2)
-library(magrittr)
+library(dplyr)
+library(knitr)
+library(grid)
+library(gridExtra)
 ```
 
-
-### The cost function
-The multiplier decreases as D increases. 
 ```{r}
+set.seed(1272)
+```
+#Variance reduction procedures for Monte Carlo methods  
+## Preliminary Setup  
+The multiplier decreases as D increases. 
+```{r, cache=TRUE}
 first.multiplier <- function(D){
   return(1/((2*pi)^(D/2)))
 }
 ```
 
-```{r}
+```{r, cache=TRUE}
 D.seq <- seq(1, from=1, to=10)
 
 first.multiplier.list <- sapply(D.seq, FUN=first.multiplier)
@@ -31,18 +37,18 @@ Testing the exponent function.
 exponent.function <- function(x){
   return((-1/2)*(t(x)%*%x))
 }
-
-D <- 10
-x <- as.matrix(runif(D, min = -5, max = 5), nrow=1, ncol=D)
+n <- 10
+D <- 2
+x <- matrix(runif(D*n, min = -5, max = 5), ncol=D)
 
 exponent.function(x)
 ```
 
 These don't really need to be broken out into different functions, but I found it helpful to try different inputs and see how the components of the function behave. 
 
-a) Crude Monte Carlo  
+##a) Crude Monte Carlo  
 First, create a function to evaluate c(x) at N samples in D dimensions (i.e., a DxN matrix).  
-```{r}
+```{r, cache=TRUE}
 cost.function.crude <- function(x, D){
   first.multiplier.sim <- first.multiplier(D)
   exponent.sim <- exponent.function(x)
@@ -50,13 +56,13 @@ cost.function.crude <- function(x, D){
 }
 ```
 
-```{r}
+```{r, cache=TRUE}
 n <- 1
 D <- 2
-x <- as.matrix(runif(D*n, min = -5, max = 5), nrow=n, ncol=D)
+x <- matrix(runif(D*n, min = -5, max = 5), nrow=n, ncol=D)
 ```
 
-```{r}
+```{r, cache=TRUE}
 cost.function.crude.apply <- function(x, D){
   return(mean(apply(x, 1, FUN = cost.function.crude, D=D)))
 }
@@ -65,52 +71,252 @@ cost.function.crude.apply(x, D)
 
 This appears to work (the mean is always close to 1/10). Now to move on to the crude Monte Carlo simulation of the cost function for n sizes from 1000 to 10,000 by increments of 1000.
 
-```{r}
+```{r, cache=TRUE}
 n.increments <- seq(from = 1000, to = 10000, by = 1000)
 
 generate.x.list <- function(n, D){
-  x <- as.matrix(runif(D*n, min = -5, max = 5), nrow=n, ncol=D)
+  x <- matrix(runif(D*n, min = -5, max = 5), nrow=n, ncol=D)
   return(x)
 }
 
 x.list <- lapply(n.increments, FUN = generate.x.list, D=D)
 ```
 
-```{r}
-crude.cost.sim.1 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list, D=D), FUN = cost.function.crude.apply, D=D))
+For D = 1:
+```{r, cache=TRUE}
+D.1 <- 1
+crude.cost.sim.1 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list, D=D.1), FUN = cost.function.crude.apply, D=D.1))
 ```
 
-```{r}
+```{r, cache=TRUE}
 crude.cost.sim.1.means <- apply(crude.cost.sim.1, 1, FUN = mean)
 crude.cost.sim.1.sd <- apply(crude.cost.sim.1, 1, FUN = sd)
-n <- 1:10
+n <- n.increments
 crude.cost.sim.1.results <- cbind(n, crude.cost.sim.1.means, crude.cost.sim.1.sd) %>% as.data.frame()
 colnames(crude.cost.sim.1.results) <- c("n", "Cost.Means", "Cost.Standard.Deviation")
 ```
 
-```{r}
+```{r, cache=TRUE}
 limits <- aes(ymax = Cost.Means + Cost.Standard.Deviation, ymin = Cost.Means - Cost.Standard.Deviation)
 ggplot(crude.cost.sim.1.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits)
 ```
 
-Now for D = 2 
+```{r, cache=TRUE}
+crude.cost.sim.1.results <- crude.cost.sim.1.results %>%
+  mutate(Cost.Coeff.Varation = Cost.Standard.Deviation / Cost.Means)
+```
 
 ```{r}
+kable(crude.cost.sim.1.results)
+```
+
+
+Now for D = 2: 
+
+```{r, cache=TRUE}
 D.2 = 2
 crude.cost.sim.2 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list, D = D.2), FUN = cost.function.crude.apply, D = D.2))
 
 (target.D.2 <- (1/10)^2)
 ```
 
-```{r}
+```{r, cache=TRUE}
 crude.cost.sim.2.means <- apply(crude.cost.sim.2, 1, FUN = mean)
 crude.cost.sim.2.sd <- apply(crude.cost.sim.2, 1, FUN = sd)
-n <- 1:10
+
 crude.cost.sim.2.results <- cbind(n, crude.cost.sim.2.means, crude.cost.sim.2.sd) %>% as.data.frame()
 colnames(crude.cost.sim.2.results) <- c("n", "Cost.Means", "Cost.Standard.Deviation")
 ```
 
-```{r}
+```{r, cache=TRUE}
 limits.2 <- aes(ymax = Cost.Means + Cost.Standard.Deviation, ymin = Cost.Means - Cost.Standard.Deviation)
 ggplot(crude.cost.sim.2.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits.2)
 ```
+
+```{r, cache=TRUE}
+crude.cost.sim.2.results <- crude.cost.sim.2.results %>%
+  mutate(Cost.Coeff.Varation = Cost.Standard.Deviation / Cost.Means)
+```
+
+```{r}
+kable(crude.cost.sim.2.results)
+```
+  
+##b) Quasi-Random Numbers   
+
+Here, I use the package 'randtoolbox' to generate a Sobol sequence. 
+```{r, message=FALSE, warning=FALSE}
+library(randtoolbox)
+```
+
+```{r, fig.width=6, fig.height=3}
+n = 100
+sobol.xy <- sobol(n, dim = 2) %>% as.data.frame()
+sobol <- qplot(sobol.xy$V1, sobol.xy$V2, main="Sobol")
+
+unif.xy <- cbind(runif(n), runif(n)) %>% as.data.frame()
+rand <- qplot(unif.xy$V1, unif.xy$V2, main = "Random")
+
+grid.arrange(sobol, rand, nrow=1)
+```
+
+The Sobol numbers are evenly distributed - they cover the distance from 0 to 1 evently. There are no major gaps or clusters. The random numbers (uniform distribution) for clusters where there are several random variables with close values and "dead space" where there are no random variables with the values. The difference between the two is their discrepency. The Sobol numbers are low discrepency but are "quasi-random" - the enforcement of even distribution means that the values are not i.i.d. and therefore not truly random. The uniform distribution random numbers have the potential to be high discrepancy. 
+
+For D = 1:
+```{r, cache=TRUE}
+generate.x.list.Sobol <- function(n, D){
+  sobol.seq <- (sobol(D*n) * 10) - 5 
+  x <- matrix(sobol.seq, nrow=n, ncol=D)
+  return(x)
+}
+```
+
+```{r, cache=TRUE}
+D.1 <- 1
+sobol.cost.sim.1 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list.Sobol, D=D.1), FUN = cost.function.crude.apply, D=D.1))
+```
+
+```{r, cache=TRUE}
+sobol.cost.sim.1.means <- apply(sobol.cost.sim.1, 1, FUN = mean)
+sobol.cost.sim.1.sd <- apply(sobol.cost.sim.1, 1, FUN = sd)
+n <- n.increments
+sobol.cost.sim.1.results <- cbind(n, sobol.cost.sim.1.means, sobol.cost.sim.1.sd) %>% as.data.frame()
+colnames(sobol.cost.sim.1.results) <- c("n", "Cost.Means", "Cost.Standard.Deviation")
+```
+
+```{r, cache=TRUE}
+limits <- aes(ymax = Cost.Means + Cost.Standard.Deviation, ymin = Cost.Means - Cost.Standard.Deviation)
+ggplot(sobol.cost.sim.1.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits)
+```
+
+```{r, cache=TRUE}
+sobol.cost.sim.1.results <- sobol.cost.sim.1.results %>%
+  mutate(Cost.Coeff.Varation = Cost.Standard.Deviation / Cost.Means)
+```
+
+```{r}
+kable(sobol.cost.sim.1.results)
+```
+
+For D = 2: 
+
+```{r, cache=TRUE}
+D.2 = 2
+sobol.cost.sim.2 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list.Sobol, D = D.2), FUN = cost.function.crude.apply, D = D.2))
+```
+
+```{r, cache=TRUE}
+sobol.cost.sim.2.means <- apply(sobol.cost.sim.2, 1, FUN = mean)
+sobol.cost.sim.2.sd <- apply(sobol.cost.sim.2, 1, FUN = sd)
+
+sobol.cost.sim.2.results <- cbind(n, sobol.cost.sim.2.means, sobol.cost.sim.2.sd) %>% as.data.frame()
+colnames(sobol.cost.sim.2.results) <- c("n", "Cost.Means", "Cost.Standard.Deviation")
+```
+
+```{r, cache=TRUE}
+limits.2 <- aes(ymax = Cost.Means + Cost.Standard.Deviation, ymin = Cost.Means - Cost.Standard.Deviation)
+ggplot(sobol.cost.sim.2.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits.2)
+```
+
+```{r, cache=TRUE}
+sobol.cost.sim.2.results <- sobol.cost.sim.2.results %>%
+  mutate(Cost.Coeff.Varation = Cost.Standard.Deviation / Cost.Means)
+```
+
+```{r, cache=TRUE}
+kable(sobol.cost.sim.2.results)
+```
+
+##c) Antithetic Variates
+```{r, cache=TRUE}
+
+generate.x.list.antithetic <- function(n, D){
+  x <- matrix(runif(D*n, min = 0, max = 1), nrow=n, ncol=D)
+
+  for(i in 1:nrow(x)){
+    ifelse(i %% 2 == 0, x[i,] <- 1 - x[i-1,], next)
+  }
+  x <- (x * 10) - 5
+  return(x)
+}
+```
+
+```{r}
+generate.x.list.antithetic(4, 3)
+```
+
+```{r, cache=TRUE}
+D.1 <- 1
+antithetic.cost.sim.1 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list.antithetic, D=D.1), FUN = cost.function.crude.apply, D=D.1))
+```
+
+```{r, cache=TRUE}
+antithetic.cost.sim.1.means <- apply(antithetic.cost.sim.1, 1, FUN = mean)
+antithetic.cost.sim.1.sd <- apply(antithetic.cost.sim.1, 1, FUN = sd)
+n <- n.increments
+antithetic.cost.sim.1.results <- cbind(n, antithetic.cost.sim.1.means, antithetic.cost.sim.1.sd) %>% as.data.frame()
+colnames(antithetic.cost.sim.1.results) <- c("n", "Cost.Means", "Cost.Standard.Deviation")
+```
+
+```{r, cache=TRUE}
+limits <- aes(ymax = Cost.Means + Cost.Standard.Deviation, ymin = Cost.Means - Cost.Standard.Deviation)
+ggplot(antithetic.cost.sim.1.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits)
+```
+
+```{r, cache=TRUE}
+antithetic.cost.sim.1.results <- antithetic.cost.sim.1.results %>%
+  mutate(Cost.Coeff.Varation = Cost.Standard.Deviation / Cost.Means)
+```
+
+```{r}
+kable(antithetic.cost.sim.1.results)
+```
+
+For D = 2: 
+
+```{r, cache=TRUE}
+D.2 = 2
+antithetic.cost.sim.2 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list.antithetic, D = D.2), FUN = cost.function.crude.apply, D = D.2))
+```
+
+```{r, cache=TRUE}
+antithetic.cost.sim.2.means <- apply(antithetic.cost.sim.2, 1, FUN = mean)
+antithetic.cost.sim.2.sd <- apply(antithetic.cost.sim.2, 1, FUN = sd)
+
+antithetic.cost.sim.2.results <- cbind(n, antithetic.cost.sim.2.means, antithetic.cost.sim.2.sd) %>% as.data.frame()
+colnames(antithetic.cost.sim.2.results) <- c("n", "Cost.Means", "Cost.Standard.Deviation")
+```
+
+```{r, cache=TRUE}
+limits.2 <- aes(ymax = Cost.Means + Cost.Standard.Deviation, ymin = Cost.Means - Cost.Standard.Deviation)
+ggplot(antithetic.cost.sim.2.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits.2)
+```
+
+```{r, cache=TRUE}
+antithetic.cost.sim.2.results <- antithetic.cost.sim.2.results %>%
+  mutate(Cost.Coeff.Varation = Cost.Standard.Deviation / Cost.Means)
+```
+
+```{r}
+kable(antithetic.cost.sim.2.results)
+```
+
+##d) Latin Hypercube Sampling
+
+
+
+##e) Importance Sampling
+
+
+
+##f) Summary
+
+
+#6.3
+
+#6.4
+
+#7.1
+
+#7.4
+
