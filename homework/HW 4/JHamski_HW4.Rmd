@@ -29,7 +29,7 @@ plot(first.multiplier.list,  type = "l")
 Testing the exponent function. 
 ```{r}
 exponent.function <- function(x){
-  return((-1/2)*t(x)%*%x)
+  return((-1/2)*(t(x)%*%x))
 }
 
 D <- 10
@@ -51,8 +51,8 @@ cost.function.crude <- function(x, D){
 ```
 
 ```{r}
-n <- 100
-D <- 1
+n <- 1
+D <- 2
 x <- as.matrix(runif(D*n, min = -5, max = 5), nrow=n, ncol=D)
 ```
 
@@ -66,8 +66,6 @@ cost.function.crude.apply(x, D)
 This appears to work (the mean is always close to 1/10). Now to move on to the crude Monte Carlo simulation of the cost function for n sizes from 1000 to 10,000 by increments of 1000.
 
 ```{r}
-
-#THIS ISN'T RIGHT. NEED TO GENERATE RANDOM MATRIX EACH TIME
 n.increments <- seq(from = 1000, to = 10000, by = 1000)
 
 generate.x.list <- function(n, D){
@@ -101,7 +99,7 @@ Now for D = 2
 D.2 = 2
 crude.cost.sim.2 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list, D = D.2), FUN = cost.function.crude.apply, D = D.2))
 
-(target.D.2 <- (1/10)^D.2)
+(target.D.2 <- (1/10)^2)
 ```
 
 ```{r}
