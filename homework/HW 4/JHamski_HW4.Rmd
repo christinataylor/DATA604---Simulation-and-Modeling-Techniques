@@ -160,13 +160,15 @@ rand <- qplot(unif.xy$V1, unif.xy$V2, main = "Random")
 grid.arrange(sobol, rand, nrow=1)
 ```
 
-The Sobol numbers are evenly distributed - they cover the distance from 0 to 1 evently. There are no major gaps or clusters. The random numbers (uniform distribution) for clusters where there are several random variables with close values and "dead space" where there are no random variables with the values. The difference between the two is their discrepency. The Sobol numbers are low discrepency but are "quasi-random" - the enforcement of even distribution means that the values are not i.i.d. and therefore not truly random. The uniform distribution random numbers have the potential to be high discrepancy. 
+The random numbers (uniform distribution) form clusters where there are several random variables with close values and "dead space" where there are no random variables with the values. 
+
+The difference between the two is their discrepency. The Sobol numbers are low discrepency but are "quasi-random" - the enforcement of even distribution means that the values are not i.i.d. and therefore not truly random. The uniform distribution random numbers have the potential to be high discrepancy. 
 
 For D = 1:
 ```{r, cache=TRUE}
 generate.x.list.Sobol <- function(n, D){
-  sobol.seq <- (sobol(D*n) * 10) - 5 
-  x <- matrix(sobol.seq, nrow=n, ncol=D)
+  sobol.seq <- (sobol(n, dim = D) * 10) - 5 
+  x <- as.matrix(sobol.seq)
   return(x)
 }
 ```
@@ -185,7 +187,6 @@ colnames(sobol.cost.sim.1.results) <- c("n", "Cost.Means", "Cost.Standard.Deviat
 ```
 
 ```{r, cache=TRUE}
-limits <- aes(ymax = Cost.Means + Cost.Standard.Deviation, ymin = Cost.Means - Cost.Standard.Deviation)
 ggplot(sobol.cost.sim.1.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits)
 ```
 
@@ -214,7 +215,6 @@ colnames(sobol.cost.sim.2.results) <- c("n", "Cost.Means", "Cost.Standard.Deviat
 ```
 
 ```{r, cache=TRUE}
-limits.2 <- aes(ymax = Cost.Means + Cost.Standard.Deviation, ymin = Cost.Means - Cost.Standard.Deviation)
 ggplot(sobol.cost.sim.2.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits.2)
 ```
 
@@ -302,9 +302,71 @@ kable(antithetic.cost.sim.2.results)
 ```
 
 ##d) Latin Hypercube Sampling
+```{r}
+library(lhs)
+```
 
+For D = 1:
+```{r, cache=TRUE}
+generate.x.list.latin <- function(n, D){
+  x <- as.matrix(randomLHS(n,D))
+  return(x)
+}
+```
 
+```{r, cache=TRUE}
+D.1 <- 1
+latin.cost.sim.1 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list.latin, D=D.1), FUN = cost.function.crude.apply, D=D.1))
+```
 
+```{r, cache=TRUE}
+latin.cost.sim.1.means <- apply(latin.cost.sim.1, 1, FUN = mean)
+latin.cost.sim.1.sd <- apply(latin.cost.sim.1, 1, FUN = sd)
+n <- n.increments
+latin.cost.sim.1.results <- cbind(n, latin.cost.sim.1.means, latin.cost.sim.1.sd) %>% as.data.frame()
+colnames(latin.cost.sim.1.results) <- c("n", "Cost.Means", "Cost.Standard.Deviation")
+```
+
+```{r, cache=TRUE}
+ggplot(latin.cost.sim.1.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits)
+```
+
+```{r, cache=TRUE}
+latin.cost.sim.1.results <- latin.cost.sim.1.results %>%
+  mutate(Cost.Coeff.Varation = Cost.Standard.Deviation / Cost.Means)
+```
+
+```{r}
+kable(latin.cost.sim.1.results)
+```
+
+For D = 2: 
+
+```{r, cache=TRUE}
+D.2 = 2
+latin.cost.sim.2 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list.latin, D = D.2), FUN = cost.function.crude.apply, D = D.2))
+```
+
+```{r, cache=TRUE}
+latin.cost.sim.2.means <- apply(sobol.cost.sim.2, 1, FUN = mean)
+latin.cost.sim.2.sd <- apply(sobol.cost.sim.2, 1, FUN = sd)
+
+latin.cost.sim.2.results <- cbind(n, latin.cost.sim.2.means, latin.cost.sim.2.sd) %>% as.data.frame()
+colnames(latin.cost.sim.2.results) <- c("n", "Cost.Means", "Cost.Standard.Deviation")
+```
+
+```{r, cache=TRUE}
+ggplot(latin.cost.sim.2.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits.2)
+```
+
+```{r, cache=TRUE}
+latin.cost.sim.2.results <- latin.cost.sim.2.results %>%
+  mutate(Cost.Coeff.Varation = Cost.Standard.Deviation / Cost.Means)
+```
+
+```{r, cache=TRUE}
+kable(latin.cost.sim.2.results)
+```
 ##e) Importance Sampling
 
 
