@@ -309,7 +309,7 @@ library(lhs)
 For D = 1:
 ```{r, cache=TRUE}
 generate.x.list.latin <- function(n, D){
-  x <- as.matrix(randomLHS(n,D))
+  x <- as.matrix((randomLHS(n,D) * 10) - 5 )
   return(x)
 }
 ```
@@ -331,7 +331,7 @@ colnames(latin.cost.sim.1.results) <- c("n", "Cost.Means", "Cost.Standard.Deviat
 ggplot(latin.cost.sim.1.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits)
 ```
 
-```{r, cache=TRUE}
+```{r, cache=FALSE}
 latin.cost.sim.1.results <- latin.cost.sim.1.results %>%
   mutate(Cost.Coeff.Varation = Cost.Standard.Deviation / Cost.Means)
 ```
@@ -375,8 +375,62 @@ kable(latin.cost.sim.2.results)
 
 
 #6.3
+*Plot the power curves for the t-test in Example 6.9 for sample sizes 10, 20, 30, 40, and 50, but omit the standard error bars. Plot the curves on the same craph, each in a different color or line type, and include a legend. Comment on the relation between power and sample size.*
+
+```{r}
+empirical.power <- function(n){
+  m = 1000
+  mu0 = 500
+  sigma = 100
+  mu <- c(seq(450, 650, 10))
+  M <- length(mu)
+  power <- numeric(M)
+  
+  for (i in 1:M) {
+    mu1 <- mu[i]
+    pvalues <- replicate(m, expr = {
+      x <- rnorm(n, mean = mu1, sd = sigma)
+      ttest <- t.test(x, alternative = "greater", 
+                      mu = mu0)
+      ttest$p.value})
+    power[i] <- mean(pvalues <= 0.05)
+  }
+  return(power)
+}
+```
+
+```{r}
+n.set <- seq(from = 10, to = 50, by = 10)
+
+power.sim <- lapply(n.set, FUN = empirical.power)
+```
+
+```{r, warning=FALSE, message=FALSE}
+theta <- seq(450, 650, 10)
+
+tidy.results <- NULL
+
+for(i in 1:length(n.set)){
+  
+  results.set <- cbind(rep(i*10, times = length(n.set)), theta,
+                           unlist(power.sim[i]))
+  tidy.results <- rbind(results.set, tidy.results)
+}
+
+tidy.results <- as.data.frame(tidy.results) 
+colnames(tidy.results) <- c("Sample.Size", "Theta", "Power")
+tidy.results$Sample.Size <- as.factor(tidy.results$Sample.Size)
+```
+
+```{r}
+ggplot(tidy.results) + geom_line(aes(x = Theta, y = Power, group = Sample.Size, color = Sample.Size))
+```
+
 
 #6.4
+*Suppose that $X_1,...,X_n$ are a random sample from a lognormal distribution with unknown parameters. Construct a 95% confidence interval for the parameter u. Use a Monte Carlo method to obtain an empirical estimate of the the confidence level.*
+
+
 
 #7.1
 
