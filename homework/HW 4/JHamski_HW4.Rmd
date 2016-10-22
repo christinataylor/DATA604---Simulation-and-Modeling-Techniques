@@ -307,19 +307,19 @@ library(lhs)
 ```
 
 For D = 1:
-```{r, cache=TRUE}
+```{r, cache=FALSE}
 generate.x.list.latin <- function(n, D){
   x <- as.matrix((randomLHS(n,D) * 10) - 5 )
   return(x)
 }
 ```
 
-```{r, cache=TRUE}
+```{r, cache=FALSE}
 D.1 <- 1
 latin.cost.sim.1 <- replicate(100, sapply(lapply(n.increments, FUN = generate.x.list.latin, D=D.1), FUN = cost.function.crude.apply, D=D.1))
 ```
 
-```{r, cache=TRUE}
+```{r, cache=FALSE}
 latin.cost.sim.1.means <- apply(latin.cost.sim.1, 1, FUN = mean)
 latin.cost.sim.1.sd <- apply(latin.cost.sim.1, 1, FUN = sd)
 n <- n.increments
@@ -327,7 +327,7 @@ latin.cost.sim.1.results <- cbind(n, latin.cost.sim.1.means, latin.cost.sim.1.sd
 colnames(latin.cost.sim.1.results) <- c("n", "Cost.Means", "Cost.Standard.Deviation")
 ```
 
-```{r, cache=TRUE}
+```{r, cache=FALSE}
 ggplot(latin.cost.sim.1.results, aes(x=n, y=Cost.Means)) + geom_line() + geom_errorbar(limits)
 ```
 
@@ -410,29 +410,61 @@ theta <- seq(450, 650, 10)
 
 tidy.results <- NULL
 
-for(i in 1:length(n.set)){
+for (i in 1:length(n.set)){
   
-  results.set <- cbind(rep(i*10, times = length(n.set)), theta,
-                           unlist(power.sim[i]))
+  results.set <- cbind(rep(i*10, times = length(n.set)), 
+                       theta, unlist(power.sim[i]))
   tidy.results <- rbind(results.set, tidy.results)
 }
 
-tidy.results <- as.data.frame(tidy.results) 
-colnames(tidy.results) <- c("Sample.Size", "Theta", "Power")
-tidy.results$Sample.Size <- as.factor(tidy.results$Sample.Size)
+tidy.results.6.3 <- as.data.frame(tidy.results) 
+colnames(tidy.results.6.3) <- c("Sample.Size", "Theta", "Power")
+tidy.results.6.3$Sample.Size <- as.factor(tidy.results.6.3$Sample.Size)
 ```
 
 ```{r}
-ggplot(tidy.results) + geom_line(aes(x = Theta, y = Power, group = Sample.Size, color = Sample.Size))
+ggplot(tidy.results.6.3) + geom_line(aes(x = Theta, y = Power, group = Sample.Size, color = Sample.Size))
 ```
 
 
 #6.4
 *Suppose that $X_1,...,X_n$ are a random sample from a lognormal distribution with unknown parameters. Construct a 95% confidence interval for the parameter u. Use a Monte Carlo method to obtain an empirical estimate of the the confidence level.*
 
+```{r}
+
+
+get.lognorm <- function(n){
+  x <- rlnorm(n, meanlog = runif(1,0,1), sdlog = runif(1, 0, 2))
+  return(x)
+}
+```
+
+getnorm() hides the lognormal parameters, I don't know what they are. However, with a sizable sample I can construct a confidence interval.
+
+```{r}
+n = 1000
+x <- get.lognorm(n)
+
+x.bar <- mean(x)
+
+(std.error <- sd(x)/sqrt(n))
+
+(CI <- c(x.bar - std.error, x.bar + std.error))
+```
+
 
 
 #7.1
+*Compute the jackknife estimate of the bias and the standard error of the correlation statistic in Example 7.2.*
+
+```{r}
+
+```
 
 #7.4
+*Refer to the air-conditioning data set aircondit provided in the boot package. The 12 observations are the times in hours between failures of ac equiment. Assme that the times between failures follow an exponential model. Obtain the MLE of the hazard rate and use bootstrap to estimate the bias and standard error of the estimate.* 
+
+```{r}
+
+```
 
