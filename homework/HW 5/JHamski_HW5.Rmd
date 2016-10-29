@@ -1,0 +1,63 @@
+---
+title: 'DATA604 - HW #5'
+author: "J. Hamski"
+date: "10/26/2016"
+output: html_document
+---
+
+At the start of each week, the condition of a machine is determined by measuring the amount of electrical current it uses. According to its amperage reading, the machine is categorized as being in one of the following four states: low, medium, high and failed. A machine in the low state has a probability of 0.05, 0.03, and 0.02 of being in the medium, high, or failed state, respectively, at the start of the next week. A machine in the medium state has a probability of 0.09 and 0.06 of being in the high or failed state, respectively, at the start of the next week (it cannot, by itself, go to the low state). And, a machine in the high state has a probability of 0.1 of being in the failed state at the start of the next week (it cannot, by itself, go to the low or medium state). If a machine is in the failed state at the start of a week, repair is immediately begun on the machine so that it will (with probability 1) be in the low state at the start of the following week. Let X be a Markov chain where Xn is the state of the machine at the start of week n.
+
+a) Give the Markov transition matrix for X.
+
+From / To | High | Medium | Low | Failed  
+-------- | ---- | ----- | --- | ------
+**High** | 0.9 | 0.0 | 0.0 | 0.1
+**Medium** | 0.09 | 0.85 | 0.0 | 0.06
+**Low** | 0.03 | 0.05 | 0.9 | 0.02
+**Failed** | 0 | 0 | 1 | 0
+
+```{r}
+stat.prob <- c(0.9,0,0,0.1,
+               0.09,0.85,0,0.06,
+               0.03,0.05,0.9,0.02,
+               0,0,1,0)
+
+machine.TM <- matrix(stat.prob, ncol = 4, nrow = 4, byrow = TRUE)
+```
+
+b) A new machine always starts in the low state. What is the probability that the machine is in the failed state three weeks after it is new?
+
+```{r}
+init.state <- c(0,0,1,0)
+(wk.3 <- init.state %*% machine.TM %*% machine.TM %*% machine.TM)
+```
+*The probability a machine is in the failed state after three weeks is:*  
+```{r}
+wk.3[4]
+```
+
+c) What is the probability that a machine has at least one failure three weeks after it is new?
+
+*The probabiity a machine has at least one faliure over three weeks is the sum of the failure probabilities at each state in the total number of iterations.*
+```{r}
+n <- 3
+
+#the first iteration is performed outside the loop
+state <- init.state %*% machine.TM
+fail.prob <- state[4]
+
+#the loop completes n-1 times
+for(i in 1:(n-1)){
+  state <- state %*% machine.TM 
+  fail.prob <- sum(fail.prob, state[4])
+}
+
+fail.prob
+```
+
+The third and final state should equal the answer from b.
+```{r}
+all.equal(wk.3, state)
+```
+
+d) What is the expected number of weeks after a new machine is installed until the first failure occurs?
