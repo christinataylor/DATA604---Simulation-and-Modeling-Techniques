@@ -4,7 +4,12 @@ author: "J. Hamski"
 date: "10/26/2016"
 output: html_document
 ---
+```{r}
+library(ggplot2)
+library(dplyr)
+```
 
+#1 
 At the start of each week, the condition of a machine is determined by measuring the amount of electrical current it uses. According to its amperage reading, the machine is categorized as being in one of the following four states: low, medium, high and failed. A machine in the low state has a probability of 0.05, 0.03, and 0.02 of being in the medium, high, or failed state, respectively, at the start of the next week. A machine in the medium state has a probability of 0.09 and 0.06 of being in the high or failed state, respectively, at the start of the next week (it cannot, by itself, go to the low state). And, a machine in the high state has a probability of 0.1 of being in the failed state at the start of the next week (it cannot, by itself, go to the low or medium state). If a machine is in the failed state at the start of a week, repair is immediately begun on the machine so that it will (with probability 1) be in the low state at the start of the following week. Let X be a Markov chain where Xn is the state of the machine at the start of week n.
 
 a) Give the Markov transition matrix for X.
@@ -61,3 +66,86 @@ all.equal(wk.3, state)
 ```
 
 d) What is the expected number of weeks after a new machine is installed until the first failure occurs?
+
+Calculate the cumulative probability that a machine has failed. Our initial state is the same starting vector as above. After one week:
+```{r}
+wk.1 <- init.state %*% machine.TM
+wk.1[4]
+```
+After two weeks:
+```{r}
+wk.2 <- wk.1 %*% machine.TM
+wk.1[4] + wk.3[4]
+```
+
+Calculated as a loop:
+```{r}
+states <- init.state %*% machine.TM
+cumulative.fail.prob <- states[4]
+
+#could change this to while
+for(i in 1:30) {
+  new.state <- states[i,] %*% machine.TM
+  states <- rbind(states, new.state)
+  cumulative.fail.prob <- c(cumulative.fail.prob, cumulative.fail.prob[i] + new.state[4])
+}
+
+```
+
+
+e) On average, how many weeks per year is the machine working?
+```{r}
+sim.year <- function(tran.matrix){
+  
+}
+```
+
+f) Each week that the machine is in the low state, a profit of $1000 is realized; each week that the machine is in the medium state, a profit of $500 is realized; each week that the machine is in the high state, a profit of $400 is realized; and the week in which a failure is fixed, a cost of $700 is incurred. What is the long-run average profit per week realized by the machine?
+```{r}
+
+```
+
+
+g) A suggestion has been made to change the maintenance policy for the machine. If at the start of a week the machine is in the high state, the machine will be taken out of service and repaired so that at the start of the next week it will again be in the low state. When a repair is made due to the machine being in the high state instead of a failed state, a cost of $600 is incurred. Is this new policy worthwhile?
+
+#2
+```{r}
+eval.prob <- function(th, k){
+  p <- (2+th)**k[1] * ((1-th)**(k[2] + k[3])) * (th**k[4])
+  return(p)
+}
+```
+
+Code adapted from: https://msu.edu/~blackj/Scan_2003_02_12/Chapter_11_Markov_Chain_Monte_Carlo_Methods.pdf
+```{r}
+k = c(125, 18, 20, 34)
+n = 10000
+
+# step size
+a = 0.1
+
+th = runif(1)
+
+for(i in 2:n){
+  y = th[i-1] - a + 2 * a * runif(1)
+  u = runif(1)
+  
+  alpha = min((eval.prob(y, k) / eval.prob(th[i-1], k)), 1)
+  
+  ifelse(u <= alpha,
+         th[i] <- y,
+         th[i] <- th[i-1])
+}
+```
+
+Investigate burn in:
+```{r}
+th.front <- as.data.frame(th[1:200])
+ggplot(th.front, aes(x = (1:200), y = th.front)) + geom_line()
+```
+
+It looks like we can use the entire generated sample. 
+```{r}
+ggplot(th, aes(th)) + geom_histogram(binwidth = 0.01, color = "white")
+```
+
