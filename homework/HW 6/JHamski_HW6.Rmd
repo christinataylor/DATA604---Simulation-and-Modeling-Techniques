@@ -7,6 +7,7 @@ output: html_document
 
 ```{r, echo=FALSE, message=FALSE, error=FALSE, warning=FALSE}
 library(ggplot2)
+library(magrittr)
 ```
 
 #1
@@ -43,6 +44,36 @@ a.
 
 
 b. 
+```{r}
+iter <- 1000
+
+int.arr <- rexp(1000, 1/10) %>% round()
+ser.time <- rexp(1000, 1/7) %>% round()
+
+t.arr <- int.arr[1]
+
+for(i in 2:iter){
+  t.arr[i] <- t.arr[i-1] + int.arr[i]
+}
+
+t.finish <- t.arr[1] + ser.time[1]
+
+for(i in 2:iter){
+  t.finish[i] <- max(t.arr[i] + ser.time[i], t.finish[i-1] + ser.time[i])
+}
+
+total.time <- t.finish - t.arr
+sys.time <- cumsum(total.time)
+wait.time <- total.time - ser.time
+
+sim.output <- cbind(int.arr, ser.time, t.arr, t.finish, total.time, sys.time, wait.time) %>% filter(sys.time < 1000)
+
+```
+
+```{r}
+L.q <- 
+```
+
 
 
 c. Calculated
