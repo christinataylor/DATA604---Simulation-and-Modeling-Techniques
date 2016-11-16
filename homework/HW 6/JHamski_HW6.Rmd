@@ -7,7 +7,7 @@ output: html_document
 
 ```{r, echo=FALSE, message=FALSE, error=FALSE, warning=FALSE}
 library(ggplot2)
-library(magrittr)
+library(dplyr)
 ```
 
 #1
@@ -66,12 +66,13 @@ total.time <- t.finish - t.arr
 sys.time <- cumsum(total.time)
 wait.time <- total.time - ser.time
 
-sim.output <- cbind(int.arr, ser.time, t.arr, t.finish, total.time, sys.time, wait.time) %>% filter(sys.time < 1000)
+sim.output <- cbind(int.arr, ser.time, t.arr, t.finish, total.time, sys.time, wait.time) %>% as.data.frame() %>% filter(sys.time < 10000)
 
 ```
 
 ```{r}
-L.q <- 
+
+
 ```
 
 
