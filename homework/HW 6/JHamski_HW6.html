@@ -156,8 +156,35 @@ Server 5 Check-out Computer: 32.2%</p>
 <div id="section-1" class="section level1">
 <h1>2</h1>
 <ol style="list-style-type: lower-alpha">
+<li><p>Simio Output<br />
+Utilization (<span class="math inline">\(p\)</span>): 0.5985<br />
+Customers in queue (<span class="math inline">\(L_Q\)</span>): 0.93<br />
+Expected system time (<span class="math inline">\(W\)</span>): 0.29</p></li>
 <li></li>
-<li></li>
+</ol>
+<pre class="r"><code>iter &lt;- 1000
+
+int.arr &lt;- rexp(1000, 1/10) %&gt;% round()
+ser.time &lt;- rexp(1000, 1/7) %&gt;% round()
+
+t.arr &lt;- int.arr[1]
+
+for(i in 2:iter){
+  t.arr[i] &lt;- t.arr[i-1] + int.arr[i]
+}
+
+t.finish &lt;- t.arr[1] + ser.time[1]
+
+for(i in 2:iter){
+  t.finish[i] &lt;- max(t.arr[i] + ser.time[i], t.finish[i-1] + ser.time[i])
+}
+
+total.time &lt;- t.finish - t.arr
+sys.time &lt;- cumsum(total.time)
+wait.time &lt;- total.time - ser.time
+
+sim.output &lt;- cbind(int.arr, ser.time, t.arr, t.finish, total.time, sys.time, wait.time) %&gt;% as.data.frame() %&gt;% filter(sys.time &lt; 10000)</code></pre>
+<ol start="3" style="list-style-type: lower-alpha">
 <li>Calculated</li>
 </ol>
 </div>

@@ -2,7 +2,9 @@
 title: "Homework 6"
 author: "James Hamski"
 date: "November 12, 2016"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r, echo=FALSE, message=FALSE, error=FALSE, warning=FALSE}
@@ -41,7 +43,10 @@ d.
 
 #2   
 a. 
-
+Simio Output  
+Utilization ($p$): 0.5985  
+Customers in queue ($L_Q$): 0.93  
+Expected system time ($W$): 0.29  
 
 b. 
 ```{r}
@@ -71,11 +76,13 @@ sim.output <- cbind(int.arr, ser.time, t.arr, t.finish, total.time, sys.time, wa
 ```
 
 ```{r}
+lm = 1/10
+u = 1/7
 
-
+(utilization <- lm / u)
+(L <- lm / u - lm)
+(w <- 1 / (u - lm))
 ```
-
-
 
 c. Calculated
 
@@ -91,16 +98,55 @@ Mechanic pay: $15 per hour
 *Would it be advisable to have a second tool-crib attendant?*  
 
 ```{r}
-
-  
-
+P0.calc <- function(c, p, n){
+  frnt <- sum(((c*p)^n)/factorial(n))
+  bck <- ((c*p)^c*(1/(factorial(c)))* (1/(1-p)))^(-1)
+  P0 <- frnt + bck
+  return(P0)
+}
 ```
-
-
-#6.2
-*A two-runway (onefor landing, one for take off) airport is being designed. The time to land an airplan is exponentially distributed, with a mean of 1.5 minutes. If airplane arrivals occur at random, what arrival rate can be tolerated if the average wait in the sky is not to exceed 3 minutes?*
 
 ```{r}
+p <- (1/4)/(2*(1/3))
+P0 <- P0.calc(2, p, c(0,1))
+```
+
+
+```{r}
+calc.L <- function(c, p, P0){
+  
+  frnt <- c * p
+  
+  top <- (c*p)^(c+1) * P0
+  bot <- c*(factorial(c)*(1-p))^2
+  
+  L <- frnt + (top / bot)
+  return(L)
+}
 
 ```
+
+```{r}
+L <- calc.L(2, p, P0)
+```
+
+Two attendant cost 
+```{r}
+L * 15 + 10
+```
+
+One attendant cost
+```{r}
+P0.2 <- P0.calc(1, p, c(0,1))
+L.2 <- calc.L(1, p, P0)
+L.2 * 15 + 10
+```
+
+It makes sense to add another attendant.   
+
+#6.2
+*A two-runway (onefor landing, one for take off) airport is being designed. The time to land an airplan is exponentially distributed, with a mean of 1.5 minutes. If airplane arrivals occur at random, what arrival rate can be tolerated if the average wait in the sky is not to exceed 3 minutes?*   
+The highest arrival rate possible is 4/9.  
+
+![](6_2.jpg)
 
